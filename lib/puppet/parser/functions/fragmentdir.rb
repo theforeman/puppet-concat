@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011 Onyx Point, Inc. <http://onyxpoint.com/>
+# Copyright (C) 2012 Onyx Point, Inc. <http://onyxpoint.com/>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,6 @@
 #
 module Puppet::Parser::Functions
     newfunction(:fragmentdir, :type => :rvalue, :doc => "Returns the fragment directory for a given concat build.") do |args|
-        "/var/lib/puppet/concat/fragments/#{args}"
+        "#{Puppet[:vardir]}/concat/fragments/#{args}"
     end
 end

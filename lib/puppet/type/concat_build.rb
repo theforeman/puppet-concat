@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011 Onyx Point, Inc. <http://onyxpoint.com/>
+# Copyright (C) 2012 Onyx Point, Inc. <http://onyxpoint.com/>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,10 +59,19 @@ Puppet::Type.newtype(:concat_build) do
 
   newparam(:file_delimiter) do
     desc "Acts as the delimiter between concatenated file fragments. For
-	  instance, if you have two files with contents 'foo' and 'bar', the
-	  result with a file_delimiter of ':' will be a file containing
+          instance, if you have two files with contents 'foo' and 'bar', the
+          result with a file_delimiter of ':' will be a file containing
           'foo:bar'."
-    defaultto "\n"
+    defaultto ""
+  end
+
+  newparam(:append_newline, :boolean => true) do
+    desc "Whether or not to automatically append a newline to the file
+          delimiter.  For example, with no file_delimiter and
+          'append_newline => false' the fragments will all wind up on the same
+          line."
+    newvalues(:true, :false)
+    defaultto :true
   end
 
   newparam(:name) do
@@ -89,7 +98,7 @@ Puppet::Type.newtype(:concat_build) do
 
   newparam(:sort, :boolean => true) do
     desc "Sort the built file. This tries to sort in a human fashion with 
-	  1 < 2 < 10 < 20 < a, etc..  sort. Note that this will need to read
+          1 < 2 < 10 < 20 < a, etc..  sort. Note that this will need to read
           the entire file into memory
 
           Example Sort:
@@ -111,12 +120,41 @@ Puppet::Type.newtype(:concat_build) do
     defaultto :false
   end
 
-  newparam(:target) do
+  newproperty(:target) do
     desc "Fully qualified path to copy output file to"
+    defaultto 'unknown'
+
     validate do |path|
-      unless path =~ /^\/$/ or path =~ /^\/[^\/]/
+      unless path == 'unknown' or path =~ /^\/$/ or path =~ /^\/[^\/]/
         fail Puppet::Error, "File paths must be fully qualified, not '#{path}'"
       end
+    end
+
+    munge do |value|
+      if value == 'unknown' then
+        value = "#{Puppet[:vardir]}/concat/output/#{resource[:name]}.out"
+      end
+      value
+    end
+
+    def retrieve
+      if File.exist?(@resource[:target]) then
+        return @resource[:target]
+      end
+
+      return nil
+    end
+
+    def insync?(is)
+      return provider.insync?(is,provider.build_file)
+    end
+
+    def sync
+      provider.sync
+    end
+
+    def change_to_s(currentvalue, newvalue)
+      "#{@resource[:order]} used for ordering"
     end
   end
 
@@ -135,36 +173,20 @@ Puppet::Type.newtype(:concat_build) do
     desc "Only print unique lines to the output file. Sort takes precedence.
           This does not affect file delimiters.
 
-	  true: Uses Ruby's Array.uniq function. It will remove all duplicates
+          true: Uses Ruby's Array.uniq function. It will remove all duplicates
           regardless  of where they are in the file.
  
-	  uniq: Acts like the uniq command found in GNU coreutils and only
+          uniq: Acts like the uniq command found in GNU coreutils and only
           removes consecutive duplicates."
 
     newvalues(:true, :false, :uniq)
     defaultto :false
   end
 
-  newproperty(:order, :array_matching => :all) do
+  newparam(:order, :array_matching => :all) do
     desc "Array containing ordering info for build"
 
     defaultto ["*"]
-
-    def retrieve
-      return resource[:order].join(',')
-    end
-
-    def insync?(is)
-      return false
-    end
-
-    def sync
-      provider.build_file
-    end
-
-    def change_to_s(currentvalue, newvalue)
-      "#{[newvalue].flatten.join(',')} used for ordering"
-    end
   end
 
   autorequire(:concat_build) do
@@ -192,14 +214,14 @@ Puppet::Type.newtype(:concat_build) do
     end
     # clean up the fragments directory for this build if there are no fragments
     # in the catalog
-    if resource.empty? and File.directory?("/var/lib/puppet/concat/fragments/#{self[:name]}") then
-      FileUtils.rm_rf("/var/lib/puppet/concat/fragments/#{self[:name]}")
+    if resource.empty? and File.directory?("#{Puppet[:vardir]}/concat/fragments/#{self[:name]}") then
+      FileUtils.rm_rf("#{Puppet[:vardir]}/concat/fragments/#{self[:name]}")
     end
     if self[:parent_build] then
       found_parent = false
       Array(self[:parent_build]).flatten.each do |parent_build|
         # Checks to see if there is a concat_build for each parent_build specified
-        if not catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:concat_build)) and r[:name].eql?(parent_build)}.nil? then
+        if catalog.resource("Concat_build[#{parent_build}]") then
           found_parent = true
         elsif not self.quiet? then
           warning "No concat_build found for parent_build #{parent_build}"

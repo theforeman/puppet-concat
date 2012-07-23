@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011 Onyx Point, Inc. <http://onyxpoint.com/>
+# Copyright (C) 2012 Onyx Point, Inc. <http://onyxpoint.com/>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,22 +18,31 @@ Puppet::Type.type(:concat_fragment).provide :concat_fragment do
 
   desc "concat_fragment provider"
 
-  def create
-    begin
-      group = @resource[:name].split('+').first
-      fragment = @resource[:name].split('+')[1..-1].join('+')
+  def retrieve
+      cur_file = "#{Puppet[:vardir]}/concat/fragments/#{@resource[:frag_group]}/#{@resource[:frag_name]}"
 
-      if File.file?("/var/lib/puppet/concat/fragments/#{group}/.~concat_fragments") then
-        debug "Purging /var/lib/puppet/concat/fragments/#{group}!"
-        FileUtils.rm_rf("/var/lib/puppet/concat/fragments/#{group}")
+      cur_val = nil
+      begin
+        cur_val = File.read(cur_file)
+      rescue Exception => e
+        debug "Could not find file fragment #{cur_file}"
       end
 
-      FileUtils.mkdir_p("/var/lib/puppet/concat/fragments/#{group}")
-      f = File.new("/var/lib/puppet/concat/fragments/#{group}/#{fragment}", "w")
-      f.puts @resource[:content]
+      return cur_val
+  end
+
+  def create
+    begin
+      group = @resource[:frag_group]
+      fragment = @resource[:frag_name]
+
+      FileUtils.mkdir_p("#{Puppet[:vardir]}/concat/fragments/#{group}")
+      f = File.new("#{Puppet[:vardir]}/concat/fragments/#{group}/#{fragment}", "w")
+      f.print @resource[:content]
       f.close
     rescue Exception => e
       fail Puppet::Error, e
     end
   end
+
 end

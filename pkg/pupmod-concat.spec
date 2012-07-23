@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2011 Onyx Point, Inc. <http://onyxpoint.com/>
+# Copyright (C) 2012 Onyx Point, Inc. <http://onyxpoint.com/>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 #
 Summary: Concat Puppet Module
 Name: pupmod-concat
-Version: 1.0
-Release: 1
+Version: 2.0
+Release: 0
 License: Apache 2.0
 Group: Applications/System
 Source: %{name}-%{version}-%{release}.tar.gz
@@ -50,6 +50,24 @@ chmod -R u=rwX,g=rX,o-rwx %{buildroot}/etc/puppet/modules/concat
 /etc/puppet/modules/concat
 
 %changelog
+* Sun Jul 22 2012 Trevor Vaughan <tvaughan@onyxpoint.com> - 2.0-0
+ - Multiple updates to the concat codebase.
+    
+   - append_newline parameter added to concat_build.
+   - Default file delimiter is now and empty file delimiter which is affected by
+     append_newline.
+   - Sort and uniq work on all lines, not whole file fragments.
+   - Normal concats work on whole file fragments so be sure to match up your
+     delimiters and newline settings in sub-builds if that's what you want.
+   - insync? etc... now works properly for both fragments and build objects.
+   - Fragments auto-create an associated build object if one does not exist.
+   - Build now separates the overwriting of a target from the creation of the
+     output file.
+   - Documentation updated to describe multi-level builds.
+   - Code updated for compatiblity with Ruby 1.9.
+   - All instances of a hard coded 'vardir' have been replaced with calls to
+     Puppet[:vardir]
+
 * Sun Jun 26 2011 Trevor Vaughan <tvaughan@onyxpoint.com> - 1.0-1
 - Modified to use the Apache 2.0 license instead of the GPLv3
 
