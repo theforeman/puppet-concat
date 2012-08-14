@@ -50,6 +50,8 @@ chmod -R u=rwX,g=rX,o-rwx %{buildroot}/etc/puppet/modules/concat
 /etc/puppet/modules/concat
 
 %changelog
+* Tue Aug 14 2012 Morgan Haskel <morgan.haskel@onyxpoint.com> - 2.0-1
+- Fixed bug in auto-creation of build objects.
 * Sun Jul 22 2012 Trevor Vaughan <tvaughan@onyxpoint.com> - 2.0-0
  - Multiple updates to the concat codebase.
     

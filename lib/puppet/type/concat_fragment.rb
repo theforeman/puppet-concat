@@ -18,19 +18,6 @@ Puppet::Type.newtype(:concat_fragment) do
           concat_build object, then one will be created for you and the
           defaults will be used."
 
-  def initialize(args)
-    super
-
-    # If the user did not specify a concat_build object in their manifest,
-    # assume that they want the defaults and create one for them.
-    if not @catalog.resource("Concat_build[#{self[:frag_group]}]") then
-      debug "Auto-adding 'concat_build' resource Concat_build['#{self[:frag_group]}'] to the catalog"
-      @catalog.add_resource(Puppet::Type.type(:concat_build).new(
-        :name => "#{self[:frag_group]}"
-      ))
-    end
-  end
-
   newparam(:name) do
     isnamevar
     validate do |value|
@@ -92,6 +79,17 @@ Puppet::Type.newtype(:concat_fragment) do
     fail Puppet::Error, "You must specify content" unless self[:content]
   end
 
+  def create_default_build
+    # If the user did not specify a concat_build object in their manifest,
+    # assume that they want the defaults and create one for them.
+    if not @catalog.resource("Concat_build[#{self[:frag_group]}]") then
+      debug "Auto-adding 'concat_build' resource Concat_build['#{self[:frag_group]}'] to the catalog"
+      @catalog.add_resource(Puppet::Type.type(:concat_build).new(
+        :name => "#{self[:frag_group]}"
+      ))
+    end
+  end
+
   def purge_unknown_fragments
     # Kill all unmanaged fragments for this group
     known_resources = []
@@ -117,6 +115,7 @@ Puppet::Type.newtype(:concat_fragment) do
   end
 
   def finish
+    create_default_build
     purge_unknown_fragments
     super
   end
