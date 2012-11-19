@@ -150,6 +150,8 @@ Puppet::Type.newtype(:concat_build) do
   end
 
   newproperty(:order, :array_matching => :all) do
+    include Puppet::Util::Diff
+
     desc "Array containing ordering info for build"
 
     defaultto ["*"]
