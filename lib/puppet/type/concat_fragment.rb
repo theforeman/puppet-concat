@@ -17,8 +17,6 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-include Puppet::Util::Diff
-
 Puppet::Type.newtype(:concat_fragment) do
   @doc = "Create a concat fragment"
 
