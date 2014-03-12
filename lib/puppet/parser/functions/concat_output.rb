@@ -15,7 +15,7 @@
 #
 module Puppet::Parser::Functions
     newfunction(:concat_output, :type => :rvalue, :doc => "Returns the output file for a given concat build.") do |args|
-        vardirfact = lookupvar('puppet_vardir')
+        vardirfact = lookupvar('::puppet_vardir')
 
         if vardirfact.nil? || vardirfact == :undefined
             clientvardir = Puppet[:vardir]
